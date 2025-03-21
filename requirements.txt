@@ -1,0 +1,15 @@
+Django
+gunicorn
+whitenoise
+psycopg2-binary
+requests
+urllib3
+dj-static
+django-cors-headers
+pytest
+pytest-django
+pytest-cov
+dj-database-url
+uvicorn
+PyJWT
+dotenv
