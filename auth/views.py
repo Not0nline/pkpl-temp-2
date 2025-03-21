@@ -1,11 +1,9 @@
+import uuid
 from django.http import JsonResponse
-from django.contrib.auth import authenticate
 from django.views.decorators.csrf import csrf_exempt
 import json
 from .utils import generate_jwt
-from django.contrib.auth.models import User
-from django.http import JsonResponse
-from .utils import generate_jwt
+from .models import CustomUser 
 
 
 @csrf_exempt
@@ -13,20 +11,24 @@ def register_view(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            username = data.get('username')
+            country_code = data.get('country_code')
+            card_number = data.get('card_number')
+            phone_number = data.get('phone_number')
             password = data.get('password')
             role = data.get('role', 'user')  # Default role is 'user'
 
-            if not username or not password:
+            if not phone_number or not password:
                 return JsonResponse({'error': 'Username and password are required'}, status=400)
 
-            if User.objects.filter(username=username).exists():
+            user_id = uuid.uuid4()
+            if CustomUser.objects.filter(id=user_id, phone_number=phone_number, country_code=country_code).exists():
                 return JsonResponse({'error': 'Username already taken'}, status=400)
 
             # Create new user
             is_staff = role == 'staff'
-            user = User.objects.create_user(username=username, password=password, is_staff=is_staff)
-            
+            user_id = uuid.uuid4()
+            user = CustomUser.objects.create_user(id=user_id, phone_number=phone_number, password=password, is_staff=is_staff, country_code=country_code, card_number=card_number)
+
             # Generate JWT token
             token = generate_jwt(user)
             response = JsonResponse({'message': 'User registered successfully', 'role': role})
@@ -42,15 +44,23 @@ def register_view(request):
 def login_view(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        username = data.get('username')
+        full_phone = data.get('full_phone')
         password = data.get('password')
-        user = authenticate(username=username, password=password)
         
-        if user:
-            token = generate_jwt(user)
-            response = JsonResponse({'message': 'Login successful', 'role': 'staff' if user.is_staff else 'user', 'Authorization':f'Bearer {token}'})
+        status_code, result = CustomUser.authenticate(full_phone=full_phone, password=password)
+        print(status_code, result, full_phone, password)
+        
+        if status_code == 200:  # Success status code
+            token = generate_jwt(result)  # Here result is the user object
+            response = JsonResponse({
+                'message': 'Login successful', 
+                'role': 'staff' if result.is_staff else 'user', 
+                'Authorization': f'Bearer {token}'
+            })
             return response
-        return JsonResponse({'error': 'Invalid credentials'}, status=400)
+        else:
+            # Handle different error cases based on status_code if needed
+            return JsonResponse({'error': result}, status=status_code)
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
