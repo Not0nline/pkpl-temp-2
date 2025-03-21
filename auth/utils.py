@@ -9,8 +9,8 @@ User = get_user_model()
 def generate_jwt(user):
     """Generates a JWT for the given user"""
     payload = {
-        'id': user.id,
-        'username': user.username,
+        'id': str(user.id),
+        'full_phone': user.full_phone,
         'role': 'staff' if user.is_staff else 'user',
         'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.JWT_EXPIRATION_SECONDS),
         'iat': datetime.datetime.utcnow()
