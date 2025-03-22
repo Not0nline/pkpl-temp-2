@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
 from django.core.validators import RegexValidator
+import re
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, id, phone_number, country_code, card_number, password=None, **extra_fields):
@@ -12,6 +13,8 @@ class CustomUserManager(BaseUserManager):
             raise ValueError('The Country Code field must be set')
         if not card_number:
             raise ValueError('The Card Number field must be set')
+        if not password or not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#])[A-Za-z\d@$!%*?&^#]{8,}$', password):
+            raise ValueError('Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character')
         
         # Remove leading zero if present
         if phone_number.startswith('0'):
