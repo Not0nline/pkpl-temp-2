@@ -3,6 +3,7 @@ import datetime
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from .models import CustomUser
 
 User = get_user_model()
 
@@ -21,8 +22,8 @@ def generate_jwt(user):
 def decode_jwt(token):
     """Decodes the JWT and returns the user object"""
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
-        user = User.objects.get(id=payload['id'])
+        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        user = CustomUser.objects.get(id=payload['id'])
         return user
     except (jwt.ExpiredSignatureError, jwt.DecodeError, ObjectDoesNotExist):
         return None

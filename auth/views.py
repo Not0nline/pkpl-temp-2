@@ -69,7 +69,7 @@ def protected_view(request):
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Authentication required'}, status=401)
 
-    return JsonResponse({'message': f'Welcome, {request.user.username}! Your role is {"user" if not request.user.is_staff else "staff" }'})
+    return JsonResponse({'message': f'Welcome, {request.user.full_phone}! Your role is {"user" if not request.user.is_staff else "staff" }'})
 
 @csrf_exempt
 def staff_only_view(request):
