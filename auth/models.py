@@ -6,7 +6,9 @@ from django.core.validators import RegexValidator
 import re
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, id, phone_number, country_code, card_number, password=None, **extra_fields):
+    def create_user(self, id, nama, phone_number, country_code, card_number, password=None, **extra_fields):
+        if not nama:
+            raise ValueError('The Name field must be set')
         if not phone_number:
             raise ValueError('The Phone Number field must be set')
         if not country_code:
@@ -25,6 +27,7 @@ class CustomUserManager(BaseUserManager):
         
         user = self.model(
             id = id,
+            nama = nama,
             phone_number=phone_number,
             country_code=country_code,
             full_phone=full_phone,
@@ -73,6 +76,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         related_query_name='customuser'
     )
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nama = models.CharField(max_length=25)
     country_code = models.CharField(max_length=5, default="+62")  # e.g., +1, +44, +62
     phone_number = models.CharField(max_length=15)  # Phone number without country code
     full_phone = models.CharField(max_length=20, unique=True, default="")  # Country code + phone number
@@ -87,7 +91,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(default=timezone.now)
 
     USERNAME_FIELD = 'full_phone'
-    REQUIRED_FIELDS = ['phone_number', 'country_code', 'card_number']
+    REQUIRED_FIELDS = ['nama','phone_number', 'country_code', 'card_number']
 
     objects = CustomUserManager()
 

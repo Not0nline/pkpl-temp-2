@@ -11,7 +11,9 @@ def generate_jwt(user):
     """Generates a JWT for the given user"""
     payload = {
         'id': str(user.id),
+        'nama': user.nama,
         'full_phone': user.full_phone,
+        'card_number': user.card_number,
         'role': 'staff' if user.is_staff else 'user',
         'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.JWT_EXPIRATION_SECONDS),
         'iat': datetime.datetime.utcnow()
