@@ -18,6 +18,8 @@ dotenv.load_dotenv()
 JWT_SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-very-secret-key')
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_SECONDS = 3600  # 1 hour
+AES_KEY = os.getenv('AES_KEY')
+AES_IV = os.getenv('AES_IV')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

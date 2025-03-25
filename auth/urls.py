@@ -21,6 +21,7 @@ from .views import (
     protected_view,
     staff_only_view,
     register_view,
+    get_credit_card
 )
 
 urlpatterns = [
@@ -29,4 +30,5 @@ urlpatterns = [
     path('protected/', protected_view, name='protected'),
     path('register/', register_view, name='register'),
     path('staff/', staff_only_view, name='staff_only'),
+    path('get-card/', get_credit_card, name="get-card")
 ]

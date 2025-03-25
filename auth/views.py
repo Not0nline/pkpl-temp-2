@@ -2,8 +2,8 @@ import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from .utils import generate_jwt
-from .models import CustomUser 
+from .utils import generate_jwt, encode_value
+from .models import CustomUser
 
 
 @csrf_exempt
@@ -12,7 +12,7 @@ def register_view(request):
         try:
             data = json.loads(request.body)
             country_code = data.get('country_code')
-            card_number = data.get('card_number')
+            card_number = encode_value(data.get('card_number'))
             phone_number = data.get('phone_number')
             password = data.get('password')
             role = data.get('role', 'user')  # Default role is 'user'
@@ -80,3 +80,10 @@ def staff_only_view(request):
         return JsonResponse({'error': 'Access denied. Staff only'}, status=403)
 
     return JsonResponse({'message': 'Welcome, Staff!'})
+
+@csrf_exempt
+def get_credit_card(request):
+    if request.user.is_authenticated:
+        return JsonResponse({'credit_card': request.user.card_number}, status=200)
+    
+    return JsonResponse({'error': 'Authentication required'}, status=401)

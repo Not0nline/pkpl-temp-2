@@ -13,3 +13,5 @@ dj-database-url
 uvicorn
 PyJWT
 dotenv
+httpx
+cryptography
