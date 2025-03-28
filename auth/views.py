@@ -2,7 +2,7 @@ import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from .utils import generate_jwt, encode_value
+from .utils import generate_jwt, encrypt_and_sign
 from .models import CustomUser
 
 
@@ -12,7 +12,7 @@ def register_view(request):
         try:
             data = json.loads(request.body)
             country_code = data.get('country_code')
-            card_number = encode_value(data.get('card_number'))
+            card_number, signature = encrypt_and_sign(data.get('card_number'))
             phone_number = data.get('phone_number')
             password = data.get('password')
             role = data.get('role', 'user')  # Default role is 'user'
@@ -27,7 +27,7 @@ def register_view(request):
             # Create new user
             is_staff = role == 'staff'
             user_id = uuid.uuid4()
-            user = CustomUser.objects.create_user(id=user_id, phone_number=phone_number, password=password, is_staff=is_staff, country_code=country_code, card_number=card_number)
+            user = CustomUser.objects.create_user(id=user_id, phone_number=phone_number, password=password, is_staff=is_staff, country_code=country_code, card_number=card_number, card_signature=signature)
 
             # Generate JWT token
             token = generate_jwt(user)
@@ -84,6 +84,6 @@ def staff_only_view(request):
 @csrf_exempt
 def get_credit_card(request):
     if request.user.is_authenticated:
-        return JsonResponse({'credit_card': request.user.card_number}, status=200)
+        return JsonResponse({'credit_card': request.user.card_number, 'signature': request.user.card_signature}, status=200)
     
     return JsonResponse({'error': 'Authentication required'}, status=401)

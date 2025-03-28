@@ -6,7 +6,7 @@ from django.core.validators import RegexValidator
 import re
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, id, phone_number, country_code, card_number, password=None, **extra_fields):
+    def create_user(self, id, phone_number, country_code, card_number, card_signature, password=None, **extra_fields):
         if not phone_number:
             raise ValueError('The Phone Number field must be set')
         if not country_code:
@@ -29,6 +29,7 @@ class CustomUserManager(BaseUserManager):
             country_code=country_code,
             full_phone=full_phone,
             card_number=card_number,
+            card_signature=card_signature,
             **extra_fields
         )
         user.set_password(password)
@@ -81,6 +82,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         validators=[card_validator],
         default="0000000000000000"
     )
+    card_signature = models.TextField(default="none")
     
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

@@ -4,31 +4,37 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from .models import CustomUser
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import padding
-from .settings import AES_IV, AES_KEY
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
 import base64
+
 
 User = get_user_model()
 
-AES_KEY = base64.b64decode(AES_KEY)
-AES_IV = base64.b64decode(AES_IV)
+def encrypt_and_sign(message):
+    # Convert message to bytes
+    message_bytes = message.encode('utf-8')
 
-def encode_value(value):
-    """
-    Encrypts a single value using AES.
-    """
-    padder = padding.PKCS7(128).padder()
-    cipher = Cipher(algorithms.AES(AES_KEY), modes.CBC(AES_IV), backend=default_backend())
-    encryptor = cipher.encryptor()
+    encrypted_message = settings.RECEIVER_PUBLIC_KEY.encrypt(
+        message_bytes,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
 
-    # Convert value to string and pad it
-    value_str = str(value)
-    padded_data = padder.update(value_str.encode('utf-8')) + padder.finalize()
-    encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
+    # Sign the message with the sender's private key
+    signature = settings.SENDER_PRIVATE_KEY.sign(
+        encrypted_message,
+        padding.PSS(
+            mgf=padding.MGF1(hashes.SHA256()),
+            salt_length=padding.PSS.MAX_LENGTH
+        ),
+        hashes.SHA256()
+    )
 
-    return encrypted_data.hex()  # Convert bytes to hex string
+    return base64.b64encode(encrypted_message).decode(), base64.b64encode(signature).decode()
 
 def generate_jwt(user):
     """Generates a JWT for the given user"""
