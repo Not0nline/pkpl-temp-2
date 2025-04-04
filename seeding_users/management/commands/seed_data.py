@@ -8,9 +8,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         user_data ={
-                "country_code": "+62",
+                "country_code": "62",
                 "phone_number": 81234567890,
-                "full_phone": "+6281234567890",
+                "full_phone": "6281234567890",
                 "card_number": "1234567812345678",
                 "is_active": True,
                 "is_staff": True,

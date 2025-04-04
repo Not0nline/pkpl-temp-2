@@ -4,37 +4,16 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from .models import CustomUser
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
-import base64
-
+import re
 
 User = get_user_model()
 
-def encrypt_and_sign(message):
-    # Convert message to bytes
-    message_bytes = message.encode('utf-8')
-
-    encrypted_message = settings.RECEIVER_PUBLIC_KEY.encrypt(
-        message_bytes,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-            algorithm=hashes.SHA256(),
-            label=None
-        )
-    )
-
-    # Sign the message with the sender's private key
-    signature = settings.SENDER_PRIVATE_KEY.sign(
-        encrypted_message,
-        padding.PSS(
-            mgf=padding.MGF1(hashes.SHA256()),
-            salt_length=padding.PSS.MAX_LENGTH
-        ),
-        hashes.SHA256()
-    )
-
-    return base64.b64encode(encrypted_message).decode(), base64.b64encode(signature).decode()
+# Helper functions
+def sanitize_input(value):
+    """Basic sanitization to remove potentially dangerous characters"""
+    if not value:
+        return value
+    return re.sub(r'[<>"\'%;()&+-]', '', value).strip()
 
 def generate_jwt(user):
     """Generates a JWT for the given user"""

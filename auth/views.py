@@ -2,18 +2,18 @@ import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from .utils import generate_jwt, encrypt_and_sign
+from .utils import generate_jwt
 from .models import CustomUser
-
+from .utils import sanitize_input
 
 @csrf_exempt
 def register_view(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            country_code = data.get('country_code')
-            card_number, signature = encrypt_and_sign(data.get('card_number'))
-            phone_number = data.get('phone_number')
+            country_code = sanitize_input(data.get('country_code'))
+            card_number = sanitize_input(data.get('card_number'))
+            phone_number = sanitize_input(data.get('phone_number'))
             password = data.get('password')
             role = data.get('role', 'user')  # Default role is 'user'
 
@@ -21,13 +21,13 @@ def register_view(request):
                 return JsonResponse({'error': 'Username and password are required'}, status=400)
 
             user_id = uuid.uuid4()
-            if CustomUser.objects.filter(id=user_id, phone_number=phone_number, country_code=country_code).exists():
-                return JsonResponse({'error': 'Username already taken'}, status=400)
+            if CustomUser.objects.filter(phone_number=phone_number, country_code=country_code).exists():
+                return JsonResponse({'error': 'Phone number already taken'}, status=400)
 
             # Create new user
             is_staff = role == 'staff'
             user_id = uuid.uuid4()
-            user = CustomUser.objects.create_user(id=user_id, phone_number=phone_number, password=password, is_staff=is_staff, country_code=country_code, card_number=card_number, card_signature=signature)
+            user = CustomUser.objects.create_user(id=user_id, phone_number=phone_number, password=password, is_staff=is_staff, country_code=country_code, card_number=card_number)
 
             # Generate JWT token
             token = generate_jwt(user)
@@ -37,6 +37,8 @@ def register_view(request):
         
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
@@ -44,7 +46,7 @@ def register_view(request):
 def login_view(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        full_phone = data.get('full_phone')
+        full_phone = sanitize_input(data.get('full_phone'))
         password = data.get('password')
         
         status_code, result = CustomUser.authenticate(full_phone=full_phone, password=password)
