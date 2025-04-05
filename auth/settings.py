@@ -21,26 +21,37 @@ JWT_SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-very-secret-key')
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_SECONDS = 3600  # 1 hour
 
-# Decode Base64 keys
-sender_private_key_pem = base64.b64decode(os.getenv("SENDER_PRIVATE_KEY"))
-sender_public_key_pem = base64.b64decode(os.getenv("SENDER_PUBLIC_KEY"))
-receiver_public_key_pem = base64.b64decode(os.getenv("RECEIVER_PUBLIC_KEY"))
+# Get keys
+sender_private_key_pem = os.getenv("SENDER_PRIVATE_KEY3", "").replace("\\n", "\n").strip()
+sender_public_key_pem = os.getenv("SENDER_PUBLIC_KEY4", "").replace("\\n", "\n").strip()
+receiver_public_key_pem = os.getenv("RECEIVER_PUBLIC_KEY2", "").replace("\\n", "\n").strip()
 
-# Load Receiver's Private Key
-RECEIVER_PUBLIC_KEY = serialization.load_pem_public_key(
-    receiver_public_key_pem
-)
+if receiver_public_key_pem and sender_private_key_pem and sender_public_key_pem:
+    try:
 
-# Load Sender's Private Key
-SENDER_PRIVATE_KEY = serialization.load_pem_private_key(
-    sender_private_key_pem,
-    password=None
-)
+        RECEIVER_PUBLIC_KEY = serialization.load_pem_public_key(
+            receiver_public_key_pem.encode("utf-8")
+        )
 
-# Load Sender's Public Key
-SENDER_PUBLIC_KEY = serialization.load_pem_public_key(
-    sender_public_key_pem
-)
+        SENDER_PRIVATE_KEY = serialization.load_pem_private_key(
+            sender_private_key_pem.encode("utf-8"),
+            password=None
+        )
+
+        SENDER_PUBLIC_KEY = serialization.load_pem_public_key(
+            sender_public_key_pem.encode("utf-8")
+        )
+
+    except ValueError as e:
+        raise RuntimeError(f"Error loading RSA keys: {e}")
+
+else:
+    RECEIVER_PRIVATE_KEY = None
+    RECEIVER_PUBLIC_KEY = None
+    SENDER_PRIVATE_KEY = None
+    SENDER_PUBLIC_KEY = None
+    raise RuntimeError("RSA keys are missing in the environment variables.")
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
